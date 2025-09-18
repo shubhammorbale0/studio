@@ -5,9 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
-  suggestCropsBasedOnLocation,
-  type SuggestCropsBasedOnLocationOutput,
-} from '@/ai/flows/suggest-crops-based-on-location';
+  suggestCrops,
+  type SuggestCropsOutput,
+} from '@/ai/flows/suggest-crops';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,28 +36,34 @@ import {
 } from 'lucide-react';
 
 const formSchema = z.object({
-  location: z
-    .string()
-    .min(2, 'Location must be at least 2 characters.')
-    .max(100, 'Location is too long.'),
+  soilType: z.string().min(2, 'Soil type is required.'),
+  soilPh: z.coerce.number().min(0).max(14, 'pH must be between 0 and 14.'),
+  temperature: z.coerce.number(),
+  rainfall: z.coerce.number(),
+  season: z.string().min(2, 'Season is required.'),
+  region: z.string().min(2, 'Region is required.'),
 });
 
 export default function Home() {
-  const [result, setResult] =
-    useState<SuggestCropsBasedOnLocationOutput | null>(null);
+  const [result, setResult] = useState<SuggestCropsOutput | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      location: '',
+      soilType: '',
+      soilPh: 7.0,
+      temperature: 25,
+      rainfall: 500,
+      season: '',
+      region: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setResult(null);
     startTransition(async () => {
-      const res = await suggestCropsBasedOnLocation(values);
+      const res = await suggestCrops(values);
       setResult(res);
     });
   }
@@ -80,24 +86,24 @@ export default function Home() {
               Get Crop Recommendations
             </CardTitle>
             <CardDescription>
-              Enter your location to receive personalized advice.
+              Enter your farm's conditions to receive personalized advice.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2"
               >
                 <FormField
                   control={form.control}
-                  name="location"
+                  name="region"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Your Location</FormLabel>
+                      <FormLabel>Region</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., Central Valley, California"
+                          placeholder="e.g., Punjab"
                           {...field}
                           disabled={isPending}
                         />
@@ -106,16 +112,108 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? (
-                    <>
-                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Advice...
-                    </>
-                  ) : (
-                    'Get Advice'
+                <FormField
+                  control={form.control}
+                  name="season"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Season</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Kharif, Rabi"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
+                />
+                <FormField
+                  control={form.control}
+                  name="soilType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Soil Type</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Loamy, Clay"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="soilPh"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Soil pH</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="temperature"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Avg. Temperature (°C)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rainfall"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Avg. Rainfall (mm)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="sm:col-span-2">
+                  <Button
+                    type="submit"
+                    disabled={isPending}
+                    className="w-full"
+                  >
+                    {isPending ? (
+                      <>
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Advice...
+                      </>
+                    ) : (
+                      'Get Advice'
+                    )}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>
@@ -126,7 +224,7 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8 text-center">
               <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
               <p className="text-muted-foreground">
-                Our AI is analyzing your location... Please wait.
+                Our AI is analyzing your conditions... Please wait.
               </p>
             </div>
           )}

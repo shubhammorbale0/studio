@@ -1,0 +1,75 @@
+'use server';
+/**
+ * @fileOverview This file defines a Genkit flow for suggesting suitable crops based on various agricultural conditions.
+ *
+ * - suggestCrops - A function that takes agricultural conditions as input and returns crop recommendations.
+ * - SuggestCropsInput - The input type for the suggestCrops function.
+ * - SuggestCropsOutput - The return type for the suggestCrops function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+const SuggestCropsInputSchema = z.object({
+  soilType: z.string().describe('The type of soil.'),
+  soilPh: z.number().describe('The pH of the soil.'),
+  temperature: z.number().describe('Average temperature in °C.'),
+  rainfall: z.number().describe('Average rainfall in mm.'),
+  season: z.string().describe('The current growing season.'),
+  region: z.string().describe('The region where the crops will be grown.'),
+});
+export type SuggestCropsInput = z.infer<typeof SuggestCropsInputSchema>;
+
+const SuggestCropsOutputSchema = z.object({
+  recommendedCrops: z
+    .string()
+    .describe('A list of recommended crops for the given conditions.'),
+  fertilizers: z.string().describe('Fertilizer suggestions for the crops.'),
+  irrigation: z.string().describe('Irrigation advice for the crops.'),
+  pestManagement: z.string().describe('Pest management tips for the crops.'),
+});
+export type SuggestCropsOutput = z.infer<typeof SuggestCropsOutputSchema>;
+
+export async function suggestCrops(
+  input: SuggestCropsInput
+): Promise<SuggestCropsOutput> {
+  return suggestCropsFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'suggestCropsPrompt',
+  input: {schema: SuggestCropsInputSchema},
+  output: {schema: SuggestCropsOutputSchema},
+  prompt: `You are an AI-powered agriculture advisor helping farmers in India choose the best crops.
+
+Based on the following conditions, recommend the most suitable crops to grow.
+- Soil Type: {{{soilType}}}
+- Soil pH: {{{soilPh}}}
+- Average Temperature: {{{temperature}}}°C
+- Rainfall: {{{rainfall}}} mm
+- Season: {{{season}}}
+- Region: {{{region}}}
+
+Also suggest suitable fertilizers, irrigation practices, and pest management tips for the recommended crops.
+If some information is missing, make reasonable assumptions and clearly state them.
+Always keep the answer short, simple, and practical so that farmers can easily understand and apply it.
+
+Present the output in a structured format like:
+
+✅ Recommended Crops:
+🌱 Fertilizers:
+💧 Irrigation:
+🛡️ Pest Management:`,
+});
+
+const suggestCropsFlow = ai.defineFlow(
+  {
+    name: 'suggestCropsFlow',
+    inputSchema: SuggestCropsInputSchema,
+    outputSchema: SuggestCropsOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);
