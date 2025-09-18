@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -40,6 +41,7 @@ import {
   Shield,
   Tractor,
   Droplets,
+  Camera,
 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -101,6 +103,25 @@ export default function Home() {
 
       <main className="w-full max-w-2xl">
         <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl">
+              New! Diagnose Plant Health
+            </CardTitle>
+            <CardDescription>
+              Use your camera to identify plant diseases and get expert advice.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/diagnose" passHref>
+              <Button className="w-full" size="lg">
+                <Camera className="mr-2" />
+                Start Diagnosis
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8 shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">
               Get Crop Recommendations
@@ -297,7 +318,7 @@ export default function Home() {
           )}
 
           {!isPending && !result && (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-12 text-center">
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-12 text-center">
               <Tractor className="h-16 w-16 text-gray-400" />
               <h3 className="font-headline text-xl font-semibold">
                 Ready to grow?
