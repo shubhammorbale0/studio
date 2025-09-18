@@ -8,6 +8,7 @@ import {
   suggestCrops,
   type SuggestCropsOutput,
 } from '@/ai/flows/suggest-crops';
+import { getMainCropForRegion } from '@/ai/flows/get-main-crop-for-region';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -63,6 +64,7 @@ const formSchema = z.object({
   rainfall: z.coerce.number(),
   season: z.string().min(2, 'Season is required.'),
   region: z.string().min(2, 'Region is required.'),
+  crop: z.string().optional(),
 });
 
 type Language = 'en' | 'hi' | 'mr';
@@ -73,6 +75,7 @@ export default function Home() {
   const [result, setResult] = useState<SuggestCropsOutput | null>(null);
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isFetchingCrop, setIsFetchingCrop] = useState(false);
   const { toast } = useToast();
   const [hasCameraPermission, setHasCameraPermission] = useState<
     boolean | undefined
@@ -93,8 +96,26 @@ export default function Home() {
       rainfall: 500,
       season: '',
       region: '',
+      crop: '',
     },
   });
+
+  const handleRegionBlur = async () => {
+    const region = form.getValues('region');
+    if (region) {
+      setIsFetchingCrop(true);
+      try {
+        const { cropName } = await getMainCropForRegion({ region });
+        if (cropName) {
+          form.setValue('crop', cropName);
+        }
+      } catch (error) {
+        console.error('Failed to fetch main crop:', error);
+      } finally {
+        setIsFetchingCrop(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (isCameraDialogOpen) {
@@ -233,8 +254,31 @@ export default function Home() {
                             placeholder={t.regionPlaceholder}
                             {...field}
                             disabled={isPending}
+                            onBlur={handleRegionBlur}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="crop"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t.cropLabel}</FormLabel>
+                        <div className="relative">
+                          <FormControl>
+                            <Input
+                              placeholder={t.cropPlaceholder}
+                              {...field}
+                              disabled={isPending || isFetchingCrop}
+                            />
+                          </FormControl>
+                          {isFetchingCrop && (
+                             <LoaderCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />
+                          )}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

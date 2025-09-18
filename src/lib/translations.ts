@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     title: 'AgriAdvise AI',
@@ -7,6 +6,8 @@ export const translations = {
     cardDescription: "Enter your farm's conditions to receive personalized advice.",
     regionLabel: 'Region',
     regionPlaceholder: 'e.g., Punjab',
+    cropLabel: 'Crop (Optional)',
+    cropPlaceholder: 'Auto-suggested from region',
     seasonLabel: 'Season',
     seasonPlaceholder: 'Select a season',
     winter: 'Winter',
@@ -43,6 +44,8 @@ export const translations = {
     cardDescription: 'व्यक्तिगत सलाह प्राप्त करने के लिए अपने खेत की condiciones दर्ज करें।',
     regionLabel: 'क्षेत्र',
     regionPlaceholder: 'जैसे, पंजाब',
+    cropLabel: 'फसल (वैकल्पिक)',
+    cropPlaceholder: 'क्षेत्र से स्वतः सुझावित',
     seasonLabel: 'मौसम',
     seasonPlaceholder: 'एक मौसम चुनें',
     winter: 'सर्दी',
@@ -79,6 +82,8 @@ export const translations = {
     cardDescription: 'वैयक्तिक सल्ला मिळविण्यासाठी तुमच्या शेताची परिस्थिती प्रविष्ट करा.',
     regionLabel: 'प्रदेश',
     regionPlaceholder: 'उदा. पंजाब',
+    cropLabel: 'पीक (ऐच्छिक)',
+    cropPlaceholder: 'प्रदेशानुसार स्वयं-सुचवलेले',
     seasonLabel: 'हंगाम',
     seasonPlaceholder: 'एक हंगाम निवडा',
     winter: 'हिवाळा',

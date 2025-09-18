@@ -18,6 +18,7 @@ const SuggestCropsInputSchema = z.object({
   season: z.string().describe('The current growing season.'),
   region: z.string().describe('The region where the crops will be grown.'),
   language: z.string().describe('The language for the response (e.g., "en", "hi", "mr").'),
+  crop: z.string().optional().describe('An optional specific crop to get advice for.'),
   photoDataUri: z
     .string()
     .optional()
@@ -61,13 +62,17 @@ Based on the following conditions, recommend the most suitable crops to grow.
 - Rainfall: {{{rainfall}}} mm
 - Season: {{{season}}}
 - Region: {{{region}}}
+{{#if crop}}
+- Specific Crop: {{{crop}}}
+Focus your recommendations on this specific crop if it is suitable for the other conditions.
+{{/if}}
 {{#if photoDataUri}}
 - Farmland Image: {{media url=photoDataUri}}
 Use the image to visually assess the land and refine your recommendations.
 {{/if}}
 
 Provide four distinct outputs:
-1.  **recommendedCrops**: Suggest a list of the most suitable crops.
+1.  **recommendedCrops**: Suggest a list of the most suitable crops. If a specific crop was provided, confirm its suitability.
 2.  **fertilizers**: Suggest suitable fertilizers for the recommended crops.
 3.  **irrigation**: Provide irrigation practices for the recommended crops.
 4.  **pestManagement**: Offer pest management tips for the recommended crops.
