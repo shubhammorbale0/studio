@@ -17,6 +17,7 @@ const SuggestCropsInputSchema = z.object({
   rainfall: z.number().describe('Average rainfall in mm.'),
   season: z.string().describe('The current growing season.'),
   region: z.string().describe('The region where the crops will be grown.'),
+  language: z.string().describe('The language for the response (e.g., "en", "hi", "mr").'),
   photoDataUri: z
     .string()
     .optional()
@@ -68,6 +69,8 @@ Use the image to visually assess the land and refine your recommendations.
 Also suggest suitable fertilizers, irrigation practices, and pest management tips for the recommended crops.
 If some information is missing, make reasonable assumptions and clearly state them.
 Always keep the answer short, simple, and practical so that farmers can easily understand and apply it.
+
+CRITICAL: Generate the entire response in the requested language: {{{language}}}.
 
 Present the output in a structured format like:
 

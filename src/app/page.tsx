@@ -54,6 +54,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { translations, soilTypesByLang } from '@/lib/translations';
 
 const formSchema = z.object({
   soilType: z.string().min(2, 'Soil type is required.'),
@@ -64,16 +65,7 @@ const formSchema = z.object({
   region: z.string().min(2, 'Region is required.'),
 });
 
-const soilTypes = [
-  'Alluvial',
-  'Black',
-  'Red and Yellow',
-  'Laterite',
-  'Arid',
-  'Saline',
-  'Peaty',
-  'Forest and Mountain',
-];
+type Language = 'en' | 'hi' | 'mr';
 
 const seasons = ['Winter', 'Summer', 'Rainy'];
 
@@ -88,6 +80,9 @@ export default function Home() {
   const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [language, setLanguage] = useState<Language>('en');
+  
+  const t = translations[language];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,9 +122,8 @@ export default function Home() {
           setHasCameraPermission(false);
           toast({
             variant: 'destructive',
-            title: 'Camera Access Denied',
-            description:
-              'Please enable camera permissions in your browser settings to use this feature.',
+            title: t.cameraAccessRequired,
+            description: t.allowCameraAccess,
           });
         }
       };
@@ -142,7 +136,7 @@ export default function Home() {
         stream.getTracks().forEach((track) => track.stop());
       }
     }
-  }, [isCameraDialogOpen, toast]);
+  }, [isCameraDialogOpen, toast, t]);
 
   const captureImage = () => {
     if (videoRef.current && canvasRef.current) {
@@ -175,15 +169,14 @@ export default function Home() {
     setResult(null);
     startTransition(async () => {
       try {
-        const res = await suggestCrops({ ...values, photoDataUri: imageDataUri || undefined });
+        const res = await suggestCrops({ ...values, language, photoDataUri: imageDataUri || undefined });
         setResult(res);
       } catch (error) {
         console.error(error);
         toast({
           variant: 'destructive',
-          title: 'Recommendation Failed',
-          description:
-            'Something went wrong while generating advice. Please try again.',
+          title: t.recommendationFailed,
+          description: t.recommendationFailedDesc,
         });
       }
     });
@@ -191,12 +184,24 @@ export default function Home() {
 
   return (
     <div className="container mx-auto flex min-h-screen flex-col items-center gap-8 p-4 py-10 sm:p-8">
-      <header className="text-center">
+      <header className="w-full max-w-2xl text-center">
+        <div className="absolute top-4 right-4 w-40">
+            <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
+              <SelectTrigger>
+                <SelectValue placeholder={t.languageLabel} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="hi">हिंदी</SelectItem>
+                <SelectItem value="mr">मराठी</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         <h1 className="font-headline text-4xl font-bold tracking-tight text-green-900/90 md:text-5xl">
-          AgriAdvise AI
+          {t.title}
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Your AI-powered guide to smarter farming.
+          {t.subtitle}
         </p>
       </header>
 
@@ -204,10 +209,10 @@ export default function Home() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">
-              Get Crop Recommendations
+              {t.cardTitle}
             </CardTitle>
             <CardDescription>
-              Enter your farm's conditions to receive personalized advice.
+              {t.cardDescription}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -222,10 +227,10 @@ export default function Home() {
                     name="region"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Region</FormLabel>
+                        <FormLabel>{t.regionLabel}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., Punjab"
+                            placeholder={t.regionPlaceholder}
                             {...field}
                             disabled={isPending}
                           />
@@ -239,7 +244,7 @@ export default function Home() {
                     name="season"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Season</FormLabel>
+                        <FormLabel>{t.seasonLabel}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -247,13 +252,13 @@ export default function Home() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a season" />
+                              <SelectValue placeholder={t.seasonPlaceholder} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {seasons.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
+                            {seasons.map((season) => (
+                              <SelectItem key={season} value={season}>
+                                {t[season.toLowerCase() as keyof typeof t]}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -267,7 +272,7 @@ export default function Home() {
                     name="soilType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Soil Type</FormLabel>
+                        <FormLabel>{t.soilTypeLabel}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -275,11 +280,11 @@ export default function Home() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a soil type" />
+                              <SelectValue placeholder={t.soilTypePlaceholder} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {soilTypes.map((type) => (
+                            {soilTypesByLang[language].map((type) => (
                               <SelectItem key={type} value={type}>
                                 {type}
                               </SelectItem>
@@ -295,7 +300,7 @@ export default function Home() {
                     name="soilPh"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Soil pH</FormLabel>
+                        <FormLabel>{t.soilPhLabel}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -313,7 +318,7 @@ export default function Home() {
                     name="temperature"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Avg. Temperature (°C)</FormLabel>
+                        <FormLabel>{t.temperatureLabel}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -330,7 +335,7 @@ export default function Home() {
                     name="rainfall"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Avg. Rainfall (mm)</FormLabel>
+                        <FormLabel>{t.rainfallLabel}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -345,7 +350,7 @@ export default function Home() {
                 </div>
                 
                 <FormItem>
-                  <FormLabel>Farmland Image (Optional)</FormLabel>
+                  <FormLabel>{t.farmlandImageLabel}</FormLabel>
                   {imageDataUri ? (
                     <div className="relative">
                       <img
@@ -367,7 +372,7 @@ export default function Home() {
                        <Button asChild variant="outline">
                         <label htmlFor="farm-image-upload" className="cursor-pointer">
                           <Upload className="mr-2" />
-                          Upload Image
+                          {t.uploadImage}
                           <input
                             id="farm-image-upload"
                             type="file"
@@ -381,12 +386,12 @@ export default function Home() {
                         <DialogTrigger asChild>
                           <Button variant="outline">
                             <Camera className="mr-2" />
-                            Use Camera
+                            {t.useCamera}
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Capture Farmland Image</DialogTitle>
+                            <DialogTitle>{t.cameraDialogTitle}</DialogTitle>
                           </DialogHeader>
                           <div className="relative overflow-hidden rounded-md border">
                             <video
@@ -400,9 +405,9 @@ export default function Home() {
                           </div>
                           {hasCameraPermission === false && (
                             <Alert variant="destructive" className="mt-4">
-                              <AlertTitle>Camera Access Required</AlertTitle>
+                              <AlertTitle>{t.cameraAccessRequired}</AlertTitle>
                               <AlertDescription>
-                                Please allow camera access to use this feature.
+                                {t.allowCameraAccess}
                               </AlertDescription>
                             </Alert>
                           )}
@@ -413,7 +418,7 @@ export default function Home() {
                               className="w-full"
                             >
                               <Camera className="mr-2" />
-                              Capture Image
+                              {t.captureImage}
                             </Button>
                           </DialogFooter>
                         </DialogContent>
@@ -432,10 +437,10 @@ export default function Home() {
                   {isPending ? (
                     <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Advice...
+                      {t.generatingAdvice}...
                     </>
                   ) : (
-                    'Get Advice'
+                    t.getAdvice
                   )}
                 </Button>
               </form>
@@ -457,22 +462,22 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <RecommendationCard
                 icon={Leaf}
-                title="Recommended Crops"
+                title={t.recommendedCrops}
                 content={result.recommendedCrops}
               />
               <RecommendationCard
                 icon={FlaskConical}
-                title="Fertilizer Suggestions"
+                title={t.fertilizerSuggestions}
                 content={result.fertilizers}
               />
               <RecommendationCard
                 icon={Droplets}
-                title="Irrigation Advice"
+                title={t.irrigationAdvice}
                 content={result.irrigation}
               />
               <RecommendationCard
                 icon={Shield}
-                title="Pest Management"
+                title={t.pestManagement}
                 content={result.pestManagement}
               />
             </div>
@@ -482,10 +487,10 @@ export default function Home() {
             <div className="mt-8 flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-12 text-center">
               <Tractor className="h-16 w-16 text-gray-400" />
               <h3 className="font-headline text-xl font-semibold">
-                Ready to grow?
+                {t.readyToGrow}
               </h3>
               <p className="text-muted-foreground">
-                Your personalized farming recommendations will appear here.
+                {t.recommendationsHere}
               </p>
             </div>
           )}
