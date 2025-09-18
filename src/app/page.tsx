@@ -62,7 +62,7 @@ const soilTypes = [
   'Forest and Mountain',
 ];
 
-const seasons = ['Kharif', 'Rabi', 'Zaid'];
+const seasons = ['Winter', 'Summer', 'Rainy'];
 
 export default function Home() {
   const [result, setResult] = useState<SuggestCropsOutput | null>(null);

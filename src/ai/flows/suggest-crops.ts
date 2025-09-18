@@ -42,6 +42,11 @@ const prompt = ai.definePrompt({
   output: {schema: SuggestCropsOutputSchema},
   prompt: `You are an AI-powered agriculture advisor helping farmers in India choose the best crops.
 
+The user will provide seasons as 'Summer', 'Winter', or 'Rainy'. You must map these to the appropriate Indian agricultural seasons:
+- 'Rainy' corresponds to the Kharif season (monsoon crops).
+- 'Winter' corresponds to the Rabi season (winter crops).
+- 'Summer' corresponds to the Zaid season (summer crops).
+
 Based on the following conditions, recommend the most suitable crops to grow.
 - Soil Type: {{{soilType}}}
 - Soil pH: {{{soilPh}}}
