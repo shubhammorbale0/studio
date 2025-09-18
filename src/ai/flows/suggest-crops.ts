@@ -66,18 +66,17 @@ Based on the following conditions, recommend the most suitable crops to grow.
 Use the image to visually assess the land and refine your recommendations.
 {{/if}}
 
-Also suggest suitable fertilizers, irrigation practices, and pest management tips for the recommended crops.
+Provide four distinct outputs:
+1.  **recommendedCrops**: Suggest a list of the most suitable crops.
+2.  **fertilizers**: Suggest suitable fertilizers for the recommended crops.
+3.  **irrigation**: Provide irrigation practices for the recommended crops.
+4.  **pestManagement**: Offer pest management tips for the recommended crops.
+
 If some information is missing, make reasonable assumptions and clearly state them.
 Always keep the answer short, simple, and practical so that farmers can easily understand and apply it.
 
 CRITICAL: Generate the entire response in the requested language: {{{language}}}.
-
-Present the output in a structured format like:
-
-✅ Recommended Crops:
-🌱 Fertilizers:
-💧 Irrigation:
-🛡️ Pest Management:`,
+`,
 });
 
 const suggestCropsFlow = ai.defineFlow(
