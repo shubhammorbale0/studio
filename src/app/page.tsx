@@ -62,6 +62,8 @@ const soilTypes = [
   'Forest and Mountain',
 ];
 
+const seasons = ['Kharif', 'Rabi', 'Zaid'];
+
 export default function Home() {
   const [result, setResult] = useState<SuggestCropsOutput | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -136,13 +138,24 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Season</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Kharif, Rabi"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a season" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {seasons.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
