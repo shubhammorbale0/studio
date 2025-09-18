@@ -25,6 +25,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { RecommendationCard } from '@/components/recommendation-card';
 import {
   FlaskConical,
@@ -43,6 +50,17 @@ const formSchema = z.object({
   season: z.string().min(2, 'Season is required.'),
   region: z.string().min(2, 'Region is required.'),
 });
+
+const soilTypes = [
+  'Alluvial',
+  'Black',
+  'Red and Yellow',
+  'Laterite',
+  'Arid',
+  'Saline',
+  'Peaty',
+  'Forest and Mountain',
+];
 
 export default function Home() {
   const [result, setResult] = useState<SuggestCropsOutput | null>(null);
@@ -135,13 +153,24 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Soil Type</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Loamy, Clay"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a soil type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {soilTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
