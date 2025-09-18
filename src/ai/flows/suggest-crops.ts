@@ -17,6 +17,12 @@ const SuggestCropsInputSchema = z.object({
   rainfall: z.number().describe('Average rainfall in mm.'),
   season: z.string().describe('The current growing season.'),
   region: z.string().describe('The region where the crops will be grown.'),
+  photoDataUri: z
+    .string()
+    .optional()
+    .describe(
+      "An optional photo of the farmland, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type SuggestCropsInput = z.infer<typeof SuggestCropsInputSchema>;
 
@@ -54,6 +60,10 @@ Based on the following conditions, recommend the most suitable crops to grow.
 - Rainfall: {{{rainfall}}} mm
 - Season: {{{season}}}
 - Region: {{{region}}}
+{{#if photoDataUri}}
+- Farmland Image: {{media url=photoDataUri}}
+Use the image to visually assess the land and refine your recommendations.
+{{/if}}
 
 Also suggest suitable fertilizers, irrigation practices, and pest management tips for the recommended crops.
 If some information is missing, make reasonable assumptions and clearly state them.

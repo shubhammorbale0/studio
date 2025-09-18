@@ -42,7 +42,10 @@ import {
   Tractor,
   Droplets,
   Camera,
+  Upload,
+  X,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   soilType: z.string().min(2, 'Soil type is required.'),
@@ -68,7 +71,9 @@ const seasons = ['Winter', 'Summer', 'Rainy'];
 
 export default function Home() {
   const [result, setResult] = useState<SuggestCropsOutput | null>(null);
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,11 +87,32 @@ export default function Home() {
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImageDataUri(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setResult(null);
     startTransition(async () => {
-      const res = await suggestCrops(values);
-      setResult(res);
+      try {
+        const res = await suggestCrops({ ...values, photoDataUri: imageDataUri || undefined });
+        setResult(res);
+      } catch (error) {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Recommendation Failed',
+          description:
+            'Something went wrong while generating advice. Please try again.',
+        });
+      }
     });
   }
 
@@ -134,149 +160,188 @@ export default function Home() {
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                className="space-y-4"
               >
-                <FormField
-                  control={form.control}
-                  name="region"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Region</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Punjab"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="season"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Season</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isPending}
-                      >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="region"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Region</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a season" />
-                          </SelectTrigger>
+                          <Input
+                            placeholder="e.g., Punjab"
+                            {...field}
+                            disabled={isPending}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {seasons.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="soilType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Soil Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isPending}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a soil type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {soilTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="soilPh"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Soil pH</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="temperature"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Avg. Temperature (°C)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="rainfall"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Avg. Rainfall (mm)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="sm:col-span-2">
-                  <Button
-                    type="submit"
-                    disabled={isPending}
-                    className="w-full"
-                  >
-                    {isPending ? (
-                      <>
-                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                        Generating Advice...
-                      </>
-                    ) : (
-                      'Get Advice'
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
+                  />
+                  <FormField
+                    control={form.control}
+                    name="season"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Season</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isPending}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a season" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {seasons.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="soilType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Soil Type</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isPending}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a soil type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {soilTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="soilPh"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Soil pH</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            {...field}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="temperature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Avg. Temperature (°C)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="rainfall"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Avg. Rainfall (mm)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+                
+                <FormItem>
+                  <FormLabel>Farmland Image (Optional)</FormLabel>
+                  {imageDataUri ? (
+                    <div className="relative">
+                      <img
+                        src={imageDataUri}
+                        alt="Farmland"
+                        className="w-full h-auto rounded-md"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7"
+                        onClick={() => setImageDataUri(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <FormControl>
+                       <Button asChild variant="outline" className="w-full">
+                        <label htmlFor="farm-image-upload">
+                          <Upload className="mr-2" />
+                          Upload Image
+                          <input
+                            id="farm-image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="sr-only"
+                          />
+                        </label>
+                      </Button>
+                    </FormControl>
+                  )}
+                  <FormMessage />
+                </FormItem>
+
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full"
+                >
+                  {isPending ? (
+                    <>
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Advice...
+                    </>
+                  ) : (
+                    'Get Advice'
+                  )}
+                </Button>
               </form>
             </Form>
           </CardContent>
