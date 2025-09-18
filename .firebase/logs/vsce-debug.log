@@ -107,3 +107,7 @@ I0918 17:44:44.040533    6766 dev.go:102] Listening on address (HTTP + gRPC): 12
 [error] [Firebase Plugin] error:  {}
 [debug] [2025-09-18T17:44:54.037Z] E0918 17:44:54.037500    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0918 17:44:54.037500    6766 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": could not find dataconnect.yaml in `/home/user/studio/dataconnect`\n"}}
+[debug] [2025-09-18T17:45:04.044Z] E0918 17:45:04.042506    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0918 17:45:04.042506    6766 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": could not find dataconnect.yaml in `/home/user/studio/dataconnect`\n"}}
+[debug] [2025-09-18T17:45:14.034Z] E0918 17:45:14.033838    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0918 17:45:14.033838    6766 watch.go:31] Failed to load config from \"/home/user/studio/dataconnect\": could not find dataconnect.yaml in `/home/user/studio/dataconnect`\n"}}

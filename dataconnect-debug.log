@@ -2,3 +2,5 @@ E0918 17:44:44.032525    6766 dev.go:79] Failed to load initial config from "/ho
 E0918 17:44:44.032737    6766 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
 I0918 17:44:44.040533    6766 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
 E0918 17:44:54.037500    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0918 17:45:04.042506    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0918 17:45:14.033838    6766 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
