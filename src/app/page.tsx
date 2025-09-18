@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import Link from 'next/link';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -46,6 +45,15 @@ import {
   X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const formSchema = z.object({
   soilType: z.string().min(2, 'Soil type is required.'),
@@ -74,6 +82,12 @@ export default function Home() {
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const [hasCameraPermission, setHasCameraPermission] = useState<
+    boolean | undefined
+  >(undefined);
+  const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,6 +100,65 @@ export default function Home() {
       region: '',
     },
   });
+
+  useEffect(() => {
+    if (isCameraDialogOpen) {
+      const getCameraPermission = async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          toast({
+            variant: 'destructive',
+            title: 'Camera Not Supported',
+            description:
+              'Your browser does not support camera access. Please try on a different browser or device.',
+          });
+          setHasCameraPermission(false);
+          return;
+        }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+          });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          setHasCameraPermission(true);
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description:
+              'Please enable camera permissions in your browser settings to use this feature.',
+          });
+        }
+      };
+
+      getCameraPermission();
+    } else {
+      // Stop camera stream when dialog closes
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    }
+  }, [isCameraDialogOpen, toast]);
+
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUri = canvas.toDataURL('image/jpeg');
+        setImageDataUri(dataUri);
+        setIsCameraDialogOpen(false);
+      }
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -129,25 +202,6 @@ export default function Home() {
 
       <main className="w-full max-w-2xl">
         <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl">
-              New! Diagnose Plant Health
-            </CardTitle>
-            <CardDescription>
-              Use your camera to identify plant diseases and get expert advice.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/diagnose" passHref>
-              <Button className="w-full" size="lg">
-                <Camera className="mr-2" />
-                Start Diagnosis
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="mt-8 shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">
               Get Crop Recommendations
@@ -297,7 +351,7 @@ export default function Home() {
                       <img
                         src={imageDataUri}
                         alt="Farmland"
-                        className="w-full h-auto rounded-md"
+                        className="w-full h-auto rounded-md border"
                       />
                       <Button
                         variant="destructive"
@@ -309,9 +363,9 @@ export default function Home() {
                       </Button>
                     </div>
                   ) : (
-                    <FormControl>
-                       <Button asChild variant="outline" className="w-full">
-                        <label htmlFor="farm-image-upload">
+                    <div className="grid grid-cols-2 gap-2">
+                       <Button asChild variant="outline">
+                        <label htmlFor="farm-image-upload" className="cursor-pointer">
                           <Upload className="mr-2" />
                           Upload Image
                           <input
@@ -323,7 +377,48 @@ export default function Home() {
                           />
                         </label>
                       </Button>
-                    </FormControl>
+                      <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">
+                            <Camera className="mr-2" />
+                            Use Camera
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Capture Farmland Image</DialogTitle>
+                          </DialogHeader>
+                          <div className="relative overflow-hidden rounded-md border">
+                            <video
+                              ref={videoRef}
+                              className="w-full aspect-video"
+                              autoPlay
+                              muted
+                              playsInline
+                            />
+                            <canvas ref={canvasRef} className="hidden" />
+                          </div>
+                          {hasCameraPermission === false && (
+                            <Alert variant="destructive" className="mt-4">
+                              <AlertTitle>Camera Access Required</AlertTitle>
+                              <AlertDescription>
+                                Please allow camera access to use this feature.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          <DialogFooter>
+                            <Button
+                              onClick={captureImage}
+                              disabled={!hasCameraPermission}
+                              className="w-full"
+                            >
+                              <Camera className="mr-2" />
+                              Capture Image
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -332,6 +427,7 @@ export default function Home() {
                   type="submit"
                   disabled={isPending}
                   className="w-full"
+                  size="lg"
                 >
                   {isPending ? (
                     <>
